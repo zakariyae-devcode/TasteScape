@@ -1,2 +1,2 @@
 # TasteScape-
-TasteScape is a full-stack recipe management platform designed for food enthusiasts to discover, create, share, and organize culinary creations. The application features a robust backend API built with Express.js and MongoDB, featuring secure user authentication, dynamic ingredient management, recipe favoriting, and a user rating system
+TasteScape is a full-stack recipe management platform built with Next.js, Express.js, and MongoDB. Designed for food enthusiasts to discover, create, share, and organize culinary creations, it features secure authentication, image uploads, category filtering, favoriting, and a user rating system
