@@ -19,6 +19,13 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: [8, "Password must be at least 8 characters long"],
   },
+  refreshToken: {
+    type: String,
+    default: null,
+  },
+
+ 
+
 }, { timestamps: true ,default:Date.now});
 
 const User = mongoose.model('User', userSchema);
