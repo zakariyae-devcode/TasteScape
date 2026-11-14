@@ -11,9 +11,6 @@ for (const key of requiredEnvVars) {
   }
 }
 
-
-
-
 export const env = {
   PORT,
   JWT_SECRET,
