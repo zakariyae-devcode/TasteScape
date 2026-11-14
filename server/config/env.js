@@ -3,13 +3,14 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const requiredEnvVars = ["MONGO_USER", "MONGO_PASSWORD", "MONGO_HOST", "PORT", "JWT_SECRET"];
-const { MONGO_USER, MONGO_PASSWORD, PORT, JWT_SECRET, MONGO_HOST } = process.env;
+
 
 for (const key of requiredEnvVars) {
   if (!process.env[key]) {
     throw new Error("Missing required environment variable: " + key);
   }
 }
+const { MONGO_USER, MONGO_PASSWORD, PORT, JWT_SECRET, MONGO_HOST } = process.env;
 
 export const env = {
   PORT,
