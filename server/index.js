@@ -1,23 +1,26 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import {env} from './config/env.js';
 import {connectDB} from './config/db.js';
 import {logger} from './middlewares/logger.js';
 const app=express();
 
-app.use(cors());
+app.use(cors(
+  origin= "http://localhost:3000",
+  credentials= true
+));
 
 app.use(express.json());
 app.use(logger);
+app.use(cookieParser());
 
 
 
 await connectDB();
 
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
+
 
 app.listen(env.PORT, () => {
   console.log("Server is running on port 5000");
