@@ -5,8 +5,9 @@ import {env} from './config/env.js';
 import {connectDB} from './config/db.js';
 import {logger} from './middlewares/logger.js';
 
- import authRoutes from "./routes/authRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
+import recipeRoutes from "./routes/recipeRoutes.js"
 
 const app=express();
 
@@ -24,6 +25,8 @@ app.use(cookieParser());
 //path
 
 app.use("api/v1/auth",authRoutes);
+
+app.use("api/v1/recipe",recipeRoutes);
 
 //connect to Database
 

@@ -1,5 +1,3 @@
-import {z} from 'zod';
-
 import { z } from "zod";
 
 export const recipeValidation = z.object({
@@ -52,3 +50,5 @@ export const recipeValidation = z.object({
     .optional()
     .or(z.literal(""))
 });
+
+export const updateRecipeValidation = recipeValidation.partial();
