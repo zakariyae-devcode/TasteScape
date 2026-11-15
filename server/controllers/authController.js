@@ -2,6 +2,10 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import  { registerValidation,loginValidation } from "../schemas/authValidation.js";
+import { env } from "../config/env.js";
+
+
+import {generateAccessToken,generateRefreshToken } from "../utils/generateToken.js";
 
 export const register = async (req, res) => {
     try{
@@ -123,5 +127,76 @@ export const login =async (req,res)=>{
     }
 }
 export const logout = async(req,res)=>{
+    try{
+
+        const refreshToken =req.cookie.refreshToken;
+        const user = await user.findOne({refreshToken});
+
+        if(!refreshToken)
+        {
+            return res.status(204).send();
+        }
+        
+
+        if(user){
+            user.refreshToken=null;
+            await user.save();
+        }
+
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+        });
+        return res.status(200).json({ message:"you have been logged out successfully " });
+    }
+    catch(error)
+    {
+        console.error("logout error:", err);
+        return res.status(500).json({ error: "Internale server error" });
+    }
 
 }
+export const refreshAccessToken = async (req, res) => {
+  try {
+   
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({ error: "Refresh Token غير موجود في الكوكيز." });
+    }
+
+    
+    const decoded = jwt.verify(refreshToken, env.JWT_SECRET);
+
+    const user = await User.findOne({ _id: decoded.userId, refreshToken });
+    if (!user) {
+      return res.status(403).json({ error: "تحذير أمني: Refresh Token غير صالح أو تم استخدامه مسبقاً." });
+    }
+
+   
+    const newAccessToken = generateAccessToken(user._id);
+    const newRefreshToken = generateRefreshToken(user._id);
+
+   
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
+    
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 2 * 24 * 60 * 60 * 1000, // يومان
+    });
+
+    
+    return res.status(200).json({
+      accessToken: newAccessToken,
+    });
+
+  } catch (err) {
+    console.error("Token rotation error:", err);
+    return res.status(403).json({ error: "انتهت صلاحية الرمز أو أنه غير صالح." });
+  }
+};

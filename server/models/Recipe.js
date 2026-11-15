@@ -1,53 +1,59 @@
-import mongoose from "mongoose"; 
+import mongoose from "mongoose";
 
-const recipeSchema = new  mongoose.Schema({
+const recipeSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: [true, "عنوان الوصفة مطلوب"],
+      trim: true,
+      maxlength: [100, "العنوان يجب ألا يتجاوز 100 حرف"]
+    },
+    description: {
+      type: String,
+      required: [true, "وصف الوصفة مطلوب"],
+      maxlength: [500, "الوصف يجب ألا يتجاوز 500 حرف"]
+    },
+    ingredients: [{
+      type: String,
+      required: [true, "يجب إدراج مكون واحد على الأقل"]
+    }],
+    instructions: [{
+      type: String,
+      required: [true, "خطوات التحضير مطلوبة"]
+    }],
+    category: {
+      type: String,
+      enum: ["إفطار", "غداء", "عشاء", "وجبات خفيفة", "حلويات", "أخرى"],
+      default: "أخرى"
+    },
+    prepTime: {
+      type: Number, // بالدقائق
+      default: 0
+    },
+    cookTime: {
+      type: Number, // بالدقائق
+      default: 0
+    },
+    servings: {
+      type: Number,
+      default: 1
+    },
+    image: {
+      type: String, // رابط الصورة أو مسارها
+      default: ""
+    },
+    // ربط الوصفة بالمستخدم الذي قام بإنشائها
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    }
+  },
+  {
+    timestamps: true // لتوليد createdAt و updatedAt تلقائياً
+  }
+);
 
-    title:{
-        type:String,
-        required:[true,"Title is required"],
-        trim:true,
-    },
+const Recipe = mongoose.model("Recipe", recipeSchema);
 
-    description:{
-        type:String,
-        required:[true,"Description is required"],
-        trim:true,
-    },
-
-    ingredients:{
-        type:[String],
-        required:[true,"Ingredients are required"],
-    },
-    
-    instructions:{
-        type:[String],
-        required:[true,"Instructions are required"],
-    },  
-    
-    cookingTime:{
-        type:Number,
-        required:[true,"Cooking time is required"],
-    },
-    
-   category:{
-        type:String,
-        required:[true,"Category is required"],
-        trim:true,
-    },
-
-    image:{
-        type:String,
-        required:[true,"Image is required"],
-    },
-    timeStamp:{
-        type:Date,
-        default:Date.now,
-    },
-    author:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    },
-})
-
-const Recipe = mongoose.model("Recipe",recipeSchema)
+export default Recipe;
