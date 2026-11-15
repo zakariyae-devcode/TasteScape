@@ -26,6 +26,13 @@ const userSchema = new mongoose.Schema({
     default:"user"
   },
 
+  favorites: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Recipe"
+    }
+  ],
+
 
   refreshToken: {
     type: String,

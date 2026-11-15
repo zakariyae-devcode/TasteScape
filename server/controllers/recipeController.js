@@ -202,3 +202,29 @@ export const getRecipeById = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
+
+export const getMyRecipes = async (req, res) => {
+  try {
+    const userId = req.user?.userId || req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized; please log in first." });
+    }
+
+    // جلب الوصفات التي تطابق معرف المستخدم الحالي كـ author
+    const recipes = await Recipe.find({ author: userId })
+      .sort({ createdAt: -1 }); // ترتبيها من الأحدث للأقدم
+
+    return res.status(200).json({
+      success: true,
+      count: recipes.length,
+      recipes,
+    });
+
+  } catch (error) {
+    console.error("Get my recipes error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
