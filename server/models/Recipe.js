@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
+import reviewSchema from "../models/Review.js"
+
 const recipeSchema = new mongoose.Schema(
   {
     title: {
@@ -47,11 +49,16 @@ const recipeSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true
-    }
+    },
+    reviews: [reviewSchema],
+    averageRating: { 
+      type: Number, default: 0 
+    },
   },
   {
     timestamps: true // لتوليد createdAt و updatedAt تلقائياً
-  }
+  },
+ 
 );
 
 const Recipe = mongoose.model("Recipe", recipeSchema);

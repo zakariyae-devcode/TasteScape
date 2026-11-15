@@ -4,12 +4,12 @@ import cookieParser from "cookie-parser";
 import {env} from './config/env.js';
 import {connectDB} from './config/db.js';
 import {logger} from './middlewares/logger.js';
-
 import authRoutes from "./routes/authRoutes.js";
-
+import userRoutes from "./routes/userRoutes.js";
 import recipeRoutes from "./routes/recipeRoutes.js";
-
 import favoriteRoutes from "./routes/favoriteRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
+import path from "path";
 
 const app=express();
 
@@ -31,6 +31,15 @@ app.use("api/v1/auth",authRoutes);
 app.use("api/v1/recipe",recipeRoutes);
 
 app.use("api/v1/favoritr",favoriteRoutes);
+
+app.use("api/v1/review",reviewRoutes)
+
+//upload
+
+app.use("/uploads",express.static(path.join(path.resolve(),"uploads" )));
+
+
+
 
 //connect to Database
 

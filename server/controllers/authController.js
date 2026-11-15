@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-import  { registerValidation,loginValidation } from "../schemas/authValidation.js";
+import  { registerValidation,loginValidation } from "../validation/authValidation.js";
 import { env } from "../config/env.js";
 
 

@@ -1,5 +1,5 @@
 import Recipe  from "../models/Recipe.js";
-import {recipeValidation, updateRecipeValidation} from "../schemas/recipeValidation.js";
+import {recipeValidation, updateRecipeValidation} from "../validation/recipeValidation.js";
 
 
 export const createRecipe = async (req,res)=>{
@@ -31,6 +31,7 @@ export const createRecipe = async (req,res)=>{
             return res.status(403).json({ error: "Access denied. Only admins can create recipes." });
         }
 
+        const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
 
         const newRecipe =new Recipe({
             ...recipeData,
@@ -81,10 +82,27 @@ export const updateRecipe= async (req,res)=>{
            return res.status(403).json({ error: "You are not authorized to modify this recipe."});
         }
 
+        let imageUrl = recipe.imageUrl; 
+
+   
+        if (req.file) {
+            if (recipe.imageUrl) {
+       
+                const oldImagePath = path.join(process.cwd(), recipe.imageUrl);
+                try {
+                await fs.unlink(oldImagePath);
+                } catch (err) {
+                console.error("Failed to delete old image file:", err);
+                }
+            }
+        
+            imageUrl = `/uploads/${req.file.filename}`;
+        }
+
         const updateRecipe= await Recipe.findByIdAndUpdate(
             recipeId,
 
-            { $set : validationResult.data},
+            { $set : validationResult.data,imageUrl},
 
             {new:true,runValidators:true}
         )
@@ -97,6 +115,9 @@ export const updateRecipe= async (req,res)=>{
 
 
     }catch(error){
+        if (req.file) {
+            await fs.unlink(req.file.path).catch(() => {});
+        }
         console.error("Update recipe error:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
