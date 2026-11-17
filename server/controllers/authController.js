@@ -1,188 +1,128 @@
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import User from "../models/User.js";
 import  { registerValidation,loginValidation } from "../validation/authValidation.js";
-import { env } from "../config/env.js";
+import 
+{
+    registerUserService,
+    loginService,
+    logoutService,
+    refreshTokenService,
 
+} from "../service/authService.js"
 
-import {generateAccessToken,generateRefreshToken } from "../utils/generateToken.js";
 
 export const register = async (req, res) => {
-    try{
-       
-       const validationResult = registerValidation.safeParse(req.body);
-
-       if(!validationResult.success){
-        const errorsMessage = validationResult.error.errors.map(err =>err.message);
-        return res.status(400).json({errors:errorsMessage});
-
+    try {
+        // 1. التحقق من صحة البيانات عبر Zod
+        const validationResult = registerValidation.safeParse(req.body);
+        if (!validationResult.success) {
+            const errorsMessage = validationResult.error.errors.map(err => err.message);
+            return res.status(400).json({ errors: errorsMessage });
         }
 
-       const {username,email,password} = validationResult.data;
+        // 2. استدعاء خدمة التسجيل وتمرير البيانات المتحقق منها
+        await authService.registerUserService(validationResult.data);
 
-       const existingUser = await User.findOne({$or:[{username},{email}]});
-       if(existingUser){
-            return res.status(400).json({error:"your provided already used, please choose another one"});
-       }
-       const hashedPassword = await bcryprt.hash(password,15);
-       const newUser = new User({
-          username,
-          email,
-          password:hashedPassword
-         });
-
-       await newUser.save();
-       return res.status(201).json({ message: "User registered successfully." });
+        return res.status(201).json({ message: "User registered successfully." });
     }
-    catch(err){
+    catch (err) {
+        // 3. التعامل مع الأخطاء القادمة من الـ Service
+        if (err.message === "USER_ALREADY_EXISTS") {
+            return res.status(400).json({ error: "Username or email is already in use, please choose another one." });
+        }
+
         console.error("Registration error:", err);
-        return res.status(500).json({ error: "Internale server error" });
+        return res.status(500).json({ error: "Internal server error" });
     }
+};
 
-}
-export const login =async (req,res)=>{
-    try{
-
-        const validationResult = loginValidation.safeParse(req.boy);
-
-        if(!validationResult.success){
-        const errorsMessage = validationResult.error.errors.map(err =>err.message);
-        return res.status(400).json({errors:errorsMessage});
-
+export const login = async (req, res) => {
+    try {
+        // 1. التحقق من صحة البيانات عبر Zod
+        const validationResult = loginValidation.safeParse(req.body);
+        if (!validationResult.success) {
+            const errorsMessage = validationResult.error.errors.map(err => err.message);
+            return res.status(400).json({ errors: errorsMessage });
         }
 
-        const {email,username,password}=validationResult.data;
-        const user=await  await User.findOne({$or:[{username},{email}]});
+        // 2. استدعاء خدمة تسجيل الدخول
+        const { accessToken, refreshToken, user } = await authService.loginService(validationResult.data);
 
-        if (!user) {
-            return res.status(401).json({ error: "your password or email or username incorrect " });
-        }
-        
-        if(user.lockUntil && user.lockUntil > Date.now()){
-            return res.status(403).json({ 
-                error: "You have exceeded the allowed number of incorrect attempts. Your account has been temporarily locked; please create a new account or try again later.",
-                redirectToRegister: true 
-            });
-        }
-
-
-        const isPasswordValid = await bcrypt.compare(password,user.password);
-
-        if(!isPasswordValid)
-        {
-            user.loginAttempts += 1;
-
-
-            if(user.loginAttempts>=4)
-            {
-          
-                user.lockUntil=Date.now() + 15 * 60 * 1000;
-
-                await user.save();
-
-                return res.status(403).json({ 
-                    error: "Error 4 times! Attempts have been temporarily blocked. Please create a new account.",
-                    redirectToRegister: true 
-                });
-            }
-            await user.save();
-            const remainingAttempts = 4 - user.loginAttempts;
-
-            return res.status(401).json({ 
-                error: `The password is incorrect. You have ${remainingAttempts} attempts remaining` 
-            });
-        }
-
-        user.loginAttempts = 0;
-        user.lockUntil = null;
-
-        const accessToken = generateAccessToken(user._id);
-        const refreshToken = generateRefreshToken(user._id);
-
-        user.refreshToken = refreshToken;
-        await user.save();
-
+        // 3. تخزين الـ Refresh Token في الـ Cookie
         res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 2 * 24 * 60 * 60 * 1000,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 2 * 24 * 60 * 60 * 1000, // يومان
         });
-
 
         return res.status(200).json({
             message: "تم تسجيل الدخول بنجاح! 🚀",
             accessToken,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-            },
+            user,
         });
-    }
-    catch(error){
-        console.error("login error:", err);
-        return res.status(500).json({ error: "Internale server error" });
-    }
-}
-export const logout = async(req,res)=>{
-    try{
 
-        const refreshToken =req.cookie.refreshToken;
-        const user = await user.findOne({refreshToken});
+    } catch (error) {
+        // 4. معالجة الأخطاء القادمة من الـ Service
+        if (error.message === "INVALID_CREDENTIALS") {
+            return res.status(401).json({ error: "Your password, email, or username is incorrect." });
+        }
+        if (error.message === "ACCOUNT_LOCKED") {
+            return res.status(403).json({ 
+                error: "You have exceeded the allowed number of incorrect attempts. Your account has been temporarily locked; please try again later.",
+                redirectToRegister: true 
+            });
+        }
+        if (error.message === "MAX_ATTEMPTS_REACHED") {
+            return res.status(403).json({ 
+                error: "4 failed attempts! Account has been temporarily blocked.",
+                redirectToRegister: true 
+            });
+        }
+        if (error.message === "INCORRECT_PASSWORD") {
+            return res.status(401).json({ 
+                error: `The password is incorrect. You have ${error.remainingAttempts} attempts remaining.` 
+            });
+        }
 
-        if(!refreshToken)
-        {
+        console.error("Login error:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const logout = async (req, res) => {
+    try {
+        // 1. استخدام req.cookies (بإضافة s) مع الاستخدام الآمن ?
+        const refreshToken = req.cookies?.refreshToken;
+
+        if (!refreshToken) {
             return res.status(204).send();
         }
-        
 
-        if(user){
-            user.refreshToken=null;
-            await user.save();
-        }
+        // 2. استدعاء خدمة تسجيل الخروج
+        await authService.logoutService(refreshToken);
 
+        // 3. مسح الـ Cookie من المتصفح
         res.clearCookie("refreshToken", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
         });
-        return res.status(200).json({ message:"you have been logged out successfully " });
-    }
-    catch(error)
-    {
-        console.error("logout error:", err);
-        return res.status(500).json({ error: "Internale server error" });
-    }
 
-}
+        return res.status(200).json({ message: "You have been logged out successfully." });
+    }
+    catch (error) { // 4. استخدام المتغير الصحيح error بدلاً من err
+        console.error("Logout error:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+};
+
 export const refreshAccessToken = async (req, res) => {
   try {
-   
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.cookies?.refreshToken;
 
-    if (!refreshToken) {
-      return res.status(401).json({ error: "Refresh Token غير موجود في الكوكيز." });
-    }
+    // استدعاء خدمة تجديد التوكن
+    const { newAccessToken, newRefreshToken } = await authService.refreshTokenService(refreshToken);
 
-    
-    const decoded = jwt.verify(refreshToken, env.JWT_SECRET);
-
-    const user = await User.findOne({ _id: decoded.userId, refreshToken });
-    if (!user) {
-      return res.status(403).json({ error: "تحذير أمني: Refresh Token غير صالح أو تم استخدامه مسبقاً." });
-    }
-
-   
-    const newAccessToken = generateAccessToken(user._id);
-    const newRefreshToken = generateRefreshToken(user._id);
-
-   
-    user.refreshToken = newRefreshToken;
-    await user.save();
-
-    
+    // تخزين الـ Refresh Token الجديد في الـ Cookie
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -190,13 +130,21 @@ export const refreshAccessToken = async (req, res) => {
       maxAge: 2 * 24 * 60 * 60 * 1000, // يومان
     });
 
-    
     return res.status(200).json({
       accessToken: newAccessToken,
     });
 
-  } catch (err) {
-    console.error("Token rotation error:", err);
-    return res.status(403).json({ error: "انتهت صلاحية الرمز أو أنه غير صالح." });
+  } catch (error) {
+    // معالجة الأخطاء القادمة من الـ Service
+    if (error.message === "NO_REFRESH_TOKEN") {
+      return res.status(401).json({ error: "Refresh Token غير موجود في الكوكيز." });
+    }
+    if (error.message === "INVALID_TOKEN" || error.message === "TOKEN_REUSE_DETECTED") {
+      return res.status(403).json({ error: "تحذير أمني: الرمز غير صالح، منتهٍ، أو تم استخدامه مسبقاً." });
+    }
+
+    console.error("Token rotation error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
+

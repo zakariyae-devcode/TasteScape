@@ -1,58 +1,80 @@
-import Review from "../models/Review.js"
+import { addReviewService,deleteReviewService } from "../service/reviewService.js";
 import { reviewValidation } from "../validation/reiewValidation.js"; // استيراد المخطط
+
+
 
 export const addReview = async (req, res) => {
   try {
     const recipeId = req.params.id;
     const userId = req.user?.userId || req.userId;
 
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized; please log in first." });
+    }
+
     // 1. التحقق من صحة المدخلات باستخدام Zod
     const validationResult = reviewValidation.safeParse(req.body);
-
     if (!validationResult.success) {
       const errorMessages = validationResult.error.errors.map((err) => err.message);
       return res.status(400).json({ errors: errorMessages });
     }
 
-    const { rating, comment } = validationResult.data;
-
-    // 2. البحث عن الوصفة
-    const recipe = await Recipe.findById(recipeId);
-    if (!recipe) {
-      return res.status(404).json({ error: "Recipe not found" });
-    }
-
-    // 3. التحقق مما إذا كان المستخدم قد علق مسبقاً
-    const existingReview = recipe.reviews.find(
-      (rev) => rev.user.toString() === userId.toString()
+    // 2. استدعاء خدمة إضافة التقييم
+    const updatedRecipe = await recipeService.addReviewService(
+      recipeId, 
+      userId, 
+      validationResult.data
     );
-
-    if (existingReview) {
-      return res.status(400).json({ error: "You have already reviewed this recipe." });
-    }
-
-    // 4. إضافة التقييم الجديد
-    recipe.reviews.push({
-      user: userId,
-      rating,
-      comment
-    });
-
-    // 5. إعادة حساب متوسط التقييم (Average Rating)
-    const totalReviews = recipe.reviews.length;
-    const sumRatings = recipe.reviews.reduce((acc, item) => acc + item.rating, 0);
-    recipe.averageRating = Number((sumRatings / totalReviews).toFixed(1));
-
-    await recipe.save();
 
     return res.status(201).json({
       success: true,
       message: "Review added successfully ⭐",
-      recipe
+      recipe: updatedRecipe
     });
 
   } catch (error) {
+    // 3. معالجة الأخطاء القادمة من الـ Service
+    if (error.message === "RECIPE_NOT_FOUND") {
+      return res.status(404).json({ error: "Recipe not found" });
+    }
+    if (error.message === "ALREADY_REVIEWED") {
+      return res.status(400).json({ error: "You have already reviewed this recipe." });
+    }
+
     console.error("Add review error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
+};
+
+export const deleteReview = async (req, res) => {
+    try {
+        const { id: recipeId, reviewId } = req.params;
+        const userId = req.user?.userId || req.userId;
+        const userRole = req.user?.role;
+
+        if (!userId) {
+            return res.status(401).json({ error: "Unauthorized; please log in first." });
+        }
+
+        const updatedRecipe = await recipeService.deleteReviewService(
+            recipeId,
+            reviewId,
+            userId,
+            userRole
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Review deleted successfully 🗑️",
+            recipe: updatedRecipe,
+        });
+
+    } catch (error) {
+        if (error.message === "RECIPE_NOT_FOUND") return res.status(404).json({ error: "Recipe not found" });
+        if (error.message === "REVIEW_NOT_FOUND") return res.status(404).json({ error: "Review not found" });
+        if (error.message === "UNAUTHORIZED") return res.status(403).json({ error: "You are not authorized to delete this review." });
+
+        console.error("Delete review error:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
 };

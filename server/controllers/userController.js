@@ -1,25 +1,26 @@
-import User from "../models/User.js";
-import Recipe from "../models/Recipe.js";
+import { getUserProfileService } from "../service/userService.js";
 
 export const getUserProfile = async (req, res) => {
-  try {
+  try 
+  {
     const userId = req.user?.userId || req.userId;
+    if (!userId) {
+        return res.status(401).json({ error: "Unauthorized; please log in first." });
+      }
 
-    // جلب بيانات المستخدم بدون كلمة المرور، مع جلب المفضلة
-    const user = await User.findById(userId).select("-password").populate("favorites");
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    // جلب الوصفات الخاصة بالمستخدم الحالي
-    const userRecipes = await Recipe.find({ author: userId });
+    const { user, recipes } = await userService.getUserProfileService(userId);
 
     return res.status(200).json({
       success: true,
       user,
       recipes: userRecipes,
     });
-  } catch (error) {
+  } 
+  catch (error) {
+    if (error.message === "USER_NOT_FOUND") {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     console.error("Get profile error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
