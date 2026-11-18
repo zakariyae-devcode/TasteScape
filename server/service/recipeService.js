@@ -3,6 +3,18 @@ import Recipe  from "../models/Recipe.js";
 import fs from "fs/promises";
 import path from "path";
 
+
+
+import redisClient from "../config/redisClient.js";
+
+// دالة لمسح الكاش المتعلق بالوصفات
+export const clearRecipeCache = async () => {
+    const keys = await redisClient.keys("cache:/api/v1/recipes*");
+    if (keys.length > 0) {
+        await redisClient.del(keys);
+    }
+};
+
 export const createNewRecipeService = async (recipeData ,file,userId)=>{
     const imageUrl= file  ? `/uploads/${file.filename}` : undefined;
 

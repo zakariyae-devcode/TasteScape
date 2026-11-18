@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const requiredEnvVars = ["MONGO_USER", "MONGO_PASSWORD", "MONGO_HOST", "PORT", "JWT_SECRET"];
+const requiredEnvVars = ["MONGO_USER", "MONGO_PASSWORD", "MONGO_HOST", "PORT", "JWT_SECRET","REDIS_URL"];
 
 
 for (const key of requiredEnvVars) {
@@ -10,10 +10,11 @@ for (const key of requiredEnvVars) {
     throw new Error("Missing required environment variable: " + key);
   }
 }
-const { MONGO_USER, MONGO_PASSWORD, PORT, JWT_SECRET, MONGO_HOST } = process.env;
+const { MONGO_USER, MONGO_PASSWORD, PORT, JWT_SECRET, MONGO_HOST,REDIS_URL } = process.env;
 
 export const env = {
   PORT,
   JWT_SECRET,
   MONGO_URI: `mongodb://${encodeURIComponent(MONGO_USER)}:${encodeURIComponent(MONGO_PASSWORD)}@${MONGO_HOST}:27017/tastescape?authSource=admin`,
+  REDIS_URL
 };

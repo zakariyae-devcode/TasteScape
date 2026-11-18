@@ -6,6 +6,7 @@ import {
     getAllRecipesService,
     getRecipeByIdService,
     getMyRecipesService,
+    clearRecipeCache,
 } from "../services/recipeService.js";
 
 import fs from "fs/promises";
@@ -47,6 +48,7 @@ export const createRecipe = async (req, res) => {
             message: "The recipe has been created successfully! 🍲",
             recipe,
         });
+        clearRecipeCache();
     }  
     catch (error) {
         await cleanupFile(req.file);
@@ -87,6 +89,7 @@ export const updateRecipe = async (req, res) => {
             message: "The recipe has been updated successfully! ✏️",
             recipe: updatedRecipe,
         });
+        clearRecipeCache();
 
     } catch (error) {
         await cleanupFile(req.file);
