@@ -49,11 +49,12 @@ app.use("/uploads",express.static(path.join(path.resolve(),"uploads" )));
 
 //connect to Database
 
-await connectDB();
-
-
+  await connectDB();
 
 
 app.listen(env.PORT, () => {
+
+
+
   console.log("Server is running on port 5000");
 });
