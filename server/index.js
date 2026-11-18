@@ -9,6 +9,8 @@ import userRoutes from "./routes/userRoutes.js";
 import recipeRoutes from "./routes/recipeRoutes.js";
 import favoriteRoutes from "./routes/favoriteRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
+import mealPlanRoutes from "./routes/mealPlanRoutes.js";
+import pfdRoutes from "./routes/pdfRoutes.js";
 import path from "path";
 
 const app=express();
@@ -32,7 +34,11 @@ app.use("api/v1/recipe",recipeRoutes);
 
 app.use("api/v1/favoritr",favoriteRoutes);
 
-app.use("api/v1/review",reviewRoutes)
+app.use("api/v1/review",reviewRoutes);
+
+app.use("/api/v1/meal-plans", mealPlanRoutes);
+
+app.user("/api/V1/pdf",pfdRoutes);
 
 //upload
 

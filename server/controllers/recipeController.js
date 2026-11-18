@@ -1,27 +1,25 @@
-import {recipeValidation, updateRecipeValidation} from "../validation/recipeValidation.js";
-import  
-{
+import { recipeValidation, updateRecipeValidation } from "../validation/recipeValidation.js";
+import {
     createNewRecipeService,
     updateRecipeService,
     deleteRecipeService,
     getAllRecipesService,
     getRecipeByIdService,
     getMyRecipesService,
-
-
 } from "../services/recipeService.js";
 
 import fs from "fs/promises";
 
+// دالة مساعدة لتنظيف الملف المرفوع عند حدوث خطأ
 const cleanupFile = async (file) => {
   if (file?.path) {
     await fs.unlink(file.path).catch(() => {});
   }
 };
 
+// 1. إنشاء وصفة جديدة
 export const createRecipe = async (req, res) => {
-    try 
-    {
+    try {
         const validationResult = recipeValidation.safeParse(req.body);
 
         if (!validationResult.success) {
@@ -37,11 +35,7 @@ export const createRecipe = async (req, res) => {
             return res.status(401).json({ error: "Unauthorized; please log in first." });
         }
 
-        const userRole = req.user?.role;
-        if (userRole !== "admin") {
-            await cleanupFile(req.file);
-            return res.status(403).json({ error: "Access denied. Only admins can create recipes." });
-        }
+        // تم الاعتماد على verifyRole في الـ Middleware للتحقق من الـ admin
 
         const recipe = await createNewRecipeService(
             validationResult.data,
@@ -54,35 +48,34 @@ export const createRecipe = async (req, res) => {
             recipe,
         });
     }  
-    catch (error) 
-    {
+    catch (error) {
         await cleanupFile(req.file);
         console.error("Create recipe error:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
 };
 
+// 2. تحديث وصفة
 export const updateRecipe = async (req, res) => {
     try {
         const recipeId = req.params.id;
         const userId = req.user?.userId || req.userId;
         const userRole = req.user?.role;
 
-        // 1. التحقق من صحة البيانات عبر Zod
         const validationResult = updateRecipeValidation.safeParse(req.body);
         if (!validationResult.success) {
-            if (req.file) await fs.unlink(req.file.path).catch(() => {});
+            await cleanupFile(req.file);
             const errorMessages = validationResult.error.errors.map((err) => err.message);
             return res.status(400).json({ errors: errorMessages });
         }
 
         if (!userId) {
-            if (req.file) await fs.unlink(req.file.path).catch(() => {});
+            await cleanupFile(req.file);
             return res.status(401).json({ error: "Unauthorized; please log in first." });
         }
 
-        // 2. استدعاء خدمة التحديث
-        const updatedRecipe = await recipeService.updateRecipeService(
+        // استخدام الدالة المستوردة مباشرة بدون recipeService.
+        const updatedRecipe = await updateRecipeService(
             recipeId,
             validationResult.data,
             req.file,
@@ -96,11 +89,8 @@ export const updateRecipe = async (req, res) => {
         });
 
     } catch (error) {
-        if (req.file) {
-            await fs.unlink(req.file.path).catch(() => {});
-        }
+        await cleanupFile(req.file);
 
-        // التعامل مع الأخطاء القادمة من الـ Service
         if (error.message === "RECIPE_NOT_FOUND") {
             return res.status(404).json({ error: "Recipe not found" });
         }
@@ -113,20 +103,19 @@ export const updateRecipe = async (req, res) => {
     }
 };
 
-
-
+// 3. حذف وصفة
 export const deleteRecipe = async (req, res) => {
   try {
     const recipeId = req.params.id;
     const userId = req.user?.userId || req.userId;
-    const userRole = req.user?.role; // تم إضافة استخراج الدور لتجنب الخطأ
+    const userRole = req.user?.role;
 
     if (!userId) {
         return res.status(401).json({ error: "Unauthorized; please log in first." });
     }
 
-    // استدعاء خدمة الحذف
-    await recipeService.deleteRecipeService(recipeId, userId, userRole);
+    // استدعاء خدمة الحذف مباشرة
+    await deleteRecipeService(recipeId, userId, userRole);
 
     return res.status(200).json({
       message: "The recipe has been deleted successfully 🗑️",
@@ -145,11 +134,10 @@ export const deleteRecipe = async (req, res) => {
   }
 };
 
-
-
+// 4. جلب جميع الوصفات مع الفلاتر والترقيم
 export const getAllRecipes = async (req, res) => {
     try {
-        const result = await recipeService.getAllRecipesService(req.query);
+        const result = await getAllRecipesService(req.query);
 
         return res.status(200).json({
             success: true,
@@ -166,12 +154,11 @@ export const getAllRecipes = async (req, res) => {
     }
 };
 
-
+// 5. جلب وصفة محددة عبر الـ ID
 export const getRecipeById = async (req, res) => {
   try {
     const recipeId = req.params.id;
-
-    const recipe = await recipeService.getRecipeByIdService(recipeId);
+    const recipe = await getRecipeByIdService(recipeId);
 
     return res.status(200).json({
       success: true,
@@ -187,7 +174,7 @@ export const getRecipeById = async (req, res) => {
   }
 };
 
-
+// 6. جلب وصفات المستخدم الحالي فقط
 export const getMyRecipes = async (req, res) => {
   try {
     const userId = req.user?.userId || req.userId;
@@ -196,32 +183,7 @@ export const getMyRecipes = async (req, res) => {
       return res.status(401).json({ error: "Unauthorized; please log in first." });
     }
 
-    // جلب الوصفات التي تطابق معرف المستخدم الحالي كـ author
-    const recipes = await Recipe.find({ author: userId })
-      .sort({ createdAt: -1 }); // ترتبيها من الأحدث للأقدم
-
-    return res.status(200).json({
-      success: true,
-      count: recipes.length,
-      recipes,
-    });
-
-  } catch (error) {
-    console.error("Get my recipes error:", error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-export const getMyRecipes = async (req, res) => {
-  try {
-    const userId = req.user?.userId || req.userId;
-
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized; please log in first." });
-    }
-
-    // استدعاء خدمة جلب وصفات المستخدم
-    const recipes = await recipeService.getMyRecipesService(userId);
+    const recipes = await getMyRecipesService(userId);
 
     return res.status(200).json({
       success: true,
