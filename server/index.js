@@ -38,7 +38,7 @@ app.use("api/v1/review",reviewRoutes);
 
 app.use("/api/v1/meal-plans", mealPlanRoutes);
 
-app.user("/api/V1/pdf",pfdRoutes);
+app.use("/api/V1/pdf",pfdRoutes);
 
 //upload
 

@@ -1,4 +1,4 @@
-import { generateRecipePdfService } from "../services/pdfService.js";
+import { generateRecipePdfService } from "../service/pdfService.js";
 
 export const exportRecipePdf = async (req, res, next) => {
     try {

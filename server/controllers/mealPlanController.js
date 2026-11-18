@@ -1,4 +1,4 @@
-import { upsertMealPlanService, generateSmartGroceryListService } from "../services/mealPlanService.js";
+import { upsertMealPlanService, generateSmartGroceryListService } from "../service/mealPlanService.js";
 
 // 1. إنشاء أو تحديث مخطط الوجبات للأسبوع
 export const upsertMealPlan = async (req, res, next) => {

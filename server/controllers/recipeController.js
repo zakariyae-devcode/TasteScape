@@ -6,8 +6,8 @@ import {
     getAllRecipesService,
     getRecipeByIdService,
     getMyRecipesService,
-    clearRecipeCache,
-} from "../services/recipeService.js";
+   
+} from "../service/recipeService.js";
 
 import fs from "fs/promises";
 

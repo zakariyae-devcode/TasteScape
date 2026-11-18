@@ -12,15 +12,14 @@ import { verifyAuth } from "../middlewares/auth.js";
 
 import { upload } from "../middlewares/upload.js";
 
-import { cacheMiddleware } from "../middlewares/cacheMiddleware.js";
 
 const router = express.Router();
 
 
-router.get("/", cacheMiddleware(300), getAllRecipes);
-router.get("/:id", cacheMiddleware(600),getRecipeById);
+router.get("/",  getAllRecipes);
+router.get("/:id", getRecipeById);
 
-router.get("/my-recipes", cacheMiddleware(600), verifyAuth, getMyRecipes);
+router.get("/my-recipes",  verifyAuth, getMyRecipes);
 router.post("/", verifyAuth,upload.single("image"), createRecipe);
 router.put("/:id", verifyAuth, updateRecipe);
 router.delete("/:id", verifyAuth, deleteRecipe);
