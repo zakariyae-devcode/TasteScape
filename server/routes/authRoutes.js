@@ -1,14 +1,18 @@
 import express from 'express';
-import { register, login, logout, refreshAccessToken } from '../controllers/authController.js';
+import { register, login,loginAdmin, logout, refreshAccessToken } from '../controllers/authController.js';
+
+
+import { verifyRole } from "../middlewares/role.js";
 
 const router=express.Router();
 
 router.post("/register",register);
 
-router.post("/login",login);
+router.post("/login",verifyRole("user"),login);
+
+router.post("/login-admin",verifyRole("admin"),loginAdmin);
 
 router.post("/refresh",refreshAccessToken);
 
 router.post("/logout",logout);
 
-export default router;

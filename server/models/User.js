@@ -14,6 +14,19 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
   },
+  first_name:{
+    type:String,
+    required:[false],
+    trim:true
+
+  },
+  last_name:{
+    type:String,
+    required:[false],
+    trim:true
+    
+  },
+
   password: {
     type: String,
     required: true,
@@ -24,6 +37,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum :["user","admin"],
     default:"user"
+  },
+
+  is_active:{
+    type:Boolean,
+    
+    default:false,
   },
 
   favorites: [

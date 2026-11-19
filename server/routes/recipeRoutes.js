@@ -10,6 +10,9 @@ import {
 
 import { verifyAuth } from "../middlewares/auth.js";
 
+
+import { verifyRole } from "../middlewares/role.js";
+
 import { upload } from "../middlewares/upload.js";
 
 
@@ -19,9 +22,9 @@ const router = express.Router();
 router.get("/",  getAllRecipes);
 router.get("/:id", getRecipeById);
 
-router.get("/my-recipes",  verifyAuth, getMyRecipes);
-router.post("/", verifyAuth,upload.single("image"), createRecipe);
-router.put("/:id", verifyAuth, updateRecipe);
-router.delete("/:id", verifyAuth, deleteRecipe);
+router.get("/my-recipes",  verifyAuth, verifyRole("admin") , getMyRecipes);
+router.post("/", verifyAuth, verifyRole("admin"),upload.single("image"), createRecipe);
+router.put("/:id", verifyAuth, verifyRole("admin") ,updateRecipe);
+router.delete("/:id", verifyAuth, verifyRole("admin"), deleteRecipe);
 
 export default router;

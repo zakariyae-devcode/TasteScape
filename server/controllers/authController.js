@@ -1,12 +1,5 @@
 import  { registerValidation,loginValidation } from "../validation/authValidation.js";
-import 
-{
-    registerUserService,
-    loginService,
-    logoutService,
-    refreshTokenService,
-
-} from "../service/authService.js"
+import { registerUserService,loginService,logoutService,refreshTokenService,loginAdminService } from "../service/authService.js";
 
 
 export const register = async (req, res) => {
@@ -19,7 +12,7 @@ export const register = async (req, res) => {
         }
 
         // 2. استدعاء خدمة التسجيل وتمرير البيانات المتحقق منها
-        await authService.registerUserService(validationResult.data);
+        await registerUserService(validationResult.data);
 
         return res.status(201).json({ message: "User registered successfully." });
     }
@@ -44,7 +37,7 @@ export const login = async (req, res) => {
         }
 
         // 2. استدعاء خدمة تسجيل الدخول
-        const { accessToken, refreshToken, user } = await authService.loginService(validationResult.data);
+        const { accessToken, refreshToken, user } = await loginService(validationResult.data);
 
         // 3. تخزين الـ Refresh Token في الـ Cookie
         res.cookie("refreshToken", refreshToken, {
@@ -88,6 +81,63 @@ export const login = async (req, res) => {
     }
 };
 
+
+
+export const loginAdmin = async (req, res) => {
+    try {
+        // 1. التحقق من صحة البيانات عبر Zod
+        const validationResult = loginValidation.safeParse(req.body);
+        if (!validationResult.success) {
+            const errorsMessage = validationResult.error.errors.map(err => err.message);
+            return res.status(400).json({ errors: errorsMessage });
+        }
+
+        // 2. استدعاء خدمة تسجيل الدخول
+        const { accessToken, refreshToken, user } = await loginAdminService(validationResult.data);
+
+        // 3. تخزين الـ Refresh Token في الـ Cookie
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 2 * 24 * 60 * 60 * 1000, // يومان
+        });
+
+        return res.status(200).json({
+            message: "تم تسجيل الدخول بنجاح! 🚀",
+            accessToken,
+            user,
+        });
+
+    } catch (error) {
+        // 4. معالجة الأخطاء القادمة من الـ Service
+        if (error.message === "INVALID_CREDENTIALS") {
+            return res.status(401).json({ error: "Your password, email, or username is incorrect." });
+        }
+        if (error.message === "ACCOUNT_LOCKED") {
+            return res.status(403).json({ 
+                error: "You have exceeded the allowed number of incorrect attempts. Your account has been temporarily locked; please try again later.",
+                redirectToRegister: true 
+            });
+        }
+        if (error.message === "MAX_ATTEMPTS_REACHED") {
+            return res.status(403).json({ 
+                error: "4 failed attempts! Account has been temporarily blocked.",
+                redirectToRegister: true 
+            });
+        }
+        if (error.message === "INCORRECT_PASSWORD") {
+            return res.status(401).json({ 
+                error: `The password is incorrect. You have ${error.remainingAttempts} attempts remaining.` 
+            });
+        }
+
+        console.error("Login error:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+
 export const logout = async (req, res) => {
     try {
         // 1. استخدام req.cookies (بإضافة s) مع الاستخدام الآمن ?
@@ -98,7 +148,7 @@ export const logout = async (req, res) => {
         }
 
         // 2. استدعاء خدمة تسجيل الخروج
-        await authService.logoutService(refreshToken);
+        await logoutService(refreshToken);
 
         // 3. مسح الـ Cookie من المتصفح
         res.clearCookie("refreshToken", {
@@ -120,7 +170,7 @@ export const refreshAccessToken = async (req, res) => {
     const refreshToken = req.cookies?.refreshToken;
 
     // استدعاء خدمة تجديد التوكن
-    const { newAccessToken, newRefreshToken } = await authService.refreshTokenService(refreshToken);
+    const { newAccessToken, newRefreshToken } = await refreshTokenService(refreshToken);
 
     // تخزين الـ Refresh Token الجديد في الـ Cookie
     res.cookie("refreshToken", newRefreshToken, {

@@ -28,7 +28,7 @@ app.use(cookieParser());
 
 //path
 
-app.use("api/v1/auth",authRoutes);
+app.use("/api/v1/auth",authRoutes);
 
 app.use("api/v1/recipe",recipeRoutes);
 
@@ -45,16 +45,12 @@ app.use("/api/V1/pdf",pfdRoutes);
 app.use("/uploads",express.static(path.join(path.resolve(),"uploads" )));
 
 
-
-
+app.get('/', (req, res) => {
+  res.send('Hello World');
+});
 //connect to Database
 
-  await connectDB();
+await connectDB();
 
 
-app.listen(env.PORT, () => {
-
-
-
-  console.log("Server is running on port 5000");
-});
+app.listen(env.PORT, () => {console.log("Server is running on port 5000");});
