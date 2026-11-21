@@ -41,8 +41,10 @@ export default function AdminLoginFormSection() {
 
     setStatus({
       type: "success",
-      message: `تم التحقق من بيانات المشرف "${trimmedId}" بنجاح. يمكنك الآن الانتقال إلى لوحة الإدارة.`,
+      message: `تم التحقق بنجاح (${trimmedId}). جارٍ فتح لوحة التحكم...`,
     });
+
+    window.location.assign("/admin/dashboard");
   }
 
   return (
@@ -59,7 +61,7 @@ export default function AdminLoginFormSection() {
             بيانات دخول المشرف
           </h2>
           <p className="mt-1.5 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
-            أدخل بيانات الحساب الإداري ورمز التحقق للوصول إلى لوحة إدارة مذاق المغرب.
+            سجّل دخولك أولاً للوصول إلى لوحة التحكم وإدارة الوصفات والحسابات والتعليقات.
           </p>
         </div>
 
@@ -140,10 +142,10 @@ export default function AdminLoginFormSection() {
               <p>{status.message}</p>
               {status.type === "success" && (
                 <Link
-                  href="/admin"
+                  href="/admin/dashboard"
                   className="mt-2.5 inline-block text-xs font-black underline sm:text-sm"
                 >
-                  الدخول إلى لوحة الإدارة ←
+                  الانتقال إلى لوحة التحكم الآن ←
                 </Link>
               )}
             </div>
@@ -153,7 +155,7 @@ export default function AdminLoginFormSection() {
             type="submit"
             className="w-full rounded-full bg-gradient-to-l from-red-800 via-orange-700 to-amber-600 px-6 py-3.5 text-sm font-black text-amber-50 shadow-xs transition hover:brightness-110 dark:from-amber-500 dark:to-orange-600 dark:text-stone-950"
           >
-            دخول لوحة الإدارة
+            تسجيل الدخول إلى لوحة التحكم
           </button>
         </form>
       </div>
