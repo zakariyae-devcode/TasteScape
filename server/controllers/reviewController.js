@@ -1,7 +1,19 @@
-import { addReviewService,deleteReviewService } from "../service/reviewService.js";
+import { addReviewService,deleteReviewService,getAllReviewService } from "../service/reviewService.js";
 import { reviewValidation } from "../validation/reiewValidation.js"; // استيراد المخطط
 
 
+
+export const getAllReviews = async (req, res) => {
+  try {
+    const { page, limit, recipeId, userId } = req.query;
+    const data = await getAllReviewService({ page, limit, recipeId, userId });
+
+    return res.status(200).json(data);
+  } catch (err) {
+    console.error("Get all reviews error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 export const addReview = async (req, res) => {
   try {

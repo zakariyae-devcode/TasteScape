@@ -62,3 +62,40 @@ export const deleteReviewService = async (recipeId, reviewId, userId, userRole) 
     await recipe.save();
     return recipe;
 };
+
+
+export const getAllReviewService = async ({ page = 1, limit = 10, recipeId, userId } = {}) => {
+  const filter = {};
+
+  if (recipeId) {
+    filter.recipe = recipeId;
+  }
+
+  if (userId) {
+    filter.user = userId;
+  }
+
+  const pageNumber = Math.max(1, Number.parseInt(page, 10) || 1);
+  const limitNumber = Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 10));
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const [reviews, total] = await Promise.all([
+    Review.find(filter)
+      .populate("user", "username email")
+      .populate("recipe", "title")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber),
+    Review.countDocuments(filter),
+  ]);
+
+  return {
+    reviews,
+    pagination: {
+      total,
+      page: pageNumber,
+      limit: limitNumber,
+      totalPages: Math.ceil(total / limitNumber),
+    },
+  };
+};

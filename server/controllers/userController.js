@@ -147,9 +147,10 @@ export const deleteUserByAdmin = async (req, res) => {
 
 export const toggleSuspendUser = async (req, res) => {
   try {
-    const result = await toggleSuspendUserService(req.user.role, req.params.id, req.body);
-    return res.status(200).json(result);
-  } catch (err) {
+      const result = await toggleSuspendUserService(req.user.role, req.params.id, req.body);
+      return res.status(200).json(result);
+  } 
+  catch (err) {
     if (err.message === "ONLY_ADMIN_CAN_MANAGE_USERS") {
       return res.status(403).json({ error: "Only admins can update user account status." });
     }
