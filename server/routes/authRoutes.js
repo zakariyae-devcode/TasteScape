@@ -6,7 +6,7 @@ import { verifyRole } from "../middlewares/role.js";
 
 const router=express.Router();
 
-router.post("/register",register);
+router.post("/register",verifyRole("user"),register);
 
 router.post("/login",verifyRole("user"),login);
 
