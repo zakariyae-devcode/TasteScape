@@ -127,10 +127,10 @@ export default function Navbar() {
           </Link>
 
           <Link
-            href="/login"
+            href="/register"
             className="rounded-full bg-gradient-to-l from-red-800 via-orange-700 to-amber-600 px-5 py-2.5 text-sm font-extrabold text-amber-50 shadow-sm transition hover:brightness-110 dark:from-amber-500 dark:to-orange-600 dark:text-stone-950"
           >
-            تسجيل الدخول
+           تسجيل حساب جديد
           </Link>
         </div>
 
