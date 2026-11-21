@@ -2,7 +2,7 @@
 import "./globals.css";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-
+import { Suspense } from "react";
 
 
 
@@ -27,7 +27,13 @@ export default function RootLayout({ children }) {
       <body
         className={`${cairo.className} flex min-h-full flex-col bg-[#faf4ea] text-stone-900 antialiased dark:bg-[#17110c] dark:text-amber-50`}
       >
-        <Navbar />
+        <Suspense
+          fallback={
+            <div className="h-16 w-full border-b border-amber-800/20 bg-[#f3e1c7]/80 dark:border-amber-500/20 dark:bg-[#24170f]" />
+          }
+        >
+          <Navbar />
+        </Suspense>
         <main className="flex-1">{children}</main>
         <Footer />
       </body>
