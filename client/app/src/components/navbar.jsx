@@ -29,8 +29,9 @@ export default function Navbar() {
 
   const navItems = [
     { label: "الرئيسية", href: "/" },
-    { label: "الوصفات", href: "/recipes" },
     { label: "من نحن", href: "/about" },
+    { label: "الوصفات", href: "/recipes" },
+   
     { label: "تواصل معنا", href: "/contact" },
   ];
 
