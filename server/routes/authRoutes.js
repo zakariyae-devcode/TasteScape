@@ -16,3 +16,5 @@ router.post("/refresh",verifyAuth,refreshAccessToken);
 
 router.post("/logout",verifyAuth,logout);
 
+export default router;
+
