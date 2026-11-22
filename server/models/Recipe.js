@@ -25,7 +25,7 @@ const recipeSchema = new mongoose.Schema(
     }],
     category: {
       type: String,
-      enum: ["إفطار", "غداء", "عشاء", "وجبات خفيفة", "حلويات", "أخرى"],
+      enum: ["إفطار", "غداء", "عشاء", "وجبات خفيفة", "حلويات", "شاي و مشروبات تقليدية","سلطات ومقبلات","أطباق رئيسية"],
       default: "أخرى"
     },
     Number_of_ingredients: {
@@ -39,6 +39,12 @@ const recipeSchema = new mongoose.Schema(
     servings: {
       type: Number, // الحصص
       default: 1
+    },
+    level :{
+      type: String,
+      enum: ["سهل","متوسط", "صعب"],
+      default: "متوسط"
+
     },
     image: {
       type: String, // رابط الصورة أو مسارها
