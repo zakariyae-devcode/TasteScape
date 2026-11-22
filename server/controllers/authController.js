@@ -3,28 +3,26 @@ import { registerUserService,loginService,logoutService,refreshTokenService,logi
 
 
 export const register = async (req, res) => {
-    try {
-        // 1. التحقق من صحة البيانات عبر Zod
-        const validationResult = registerValidation.safeParse(req.body);
-        if (!validationResult.success) {
-            const errorsMessage = validationResult.error.errors.map(err => err.message);
-            return res.status(400).json({ errors: errorsMessage });
-        }
-
-        // 2. استدعاء خدمة التسجيل وتمرير البيانات المتحقق منها
-        await registerUserService(validationResult.data);
-
-        return res.status(201).json({ message: "User registered successfully." });
+  try {
+    const validationResult = registerValidation.safeParse(req.body);
+    if (!validationResult.success) {
+      const errorsMessage = validationResult.error.issues.map((issue) => issue.message);
+      return res.status(400).json({ errors: errorsMessage });
     }
-    catch (err) {
-        // 3. التعامل مع الأخطاء القادمة من الـ Service
-        if (err.message === "USER_ALREADY_EXISTS") {
-            return res.status(400).json({ error: "Username or email is already in use, please choose another one." });
-        }
 
-        console.error("Registration error:", err);
-        return res.status(500).json({ error: "Internal server error" });
+    await registerUserService(validationResult.data);
+
+    return res.status(201).json({ message: "User registered successfully." });
+  } catch (err) {
+    if (err.message === "USER_ALREADY_EXISTS") {
+      return res.status(400).json({
+        error: "Username or email is already in use, please choose another one.",
+      });
     }
+
+    console.error("Registration error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 };
 
 export const login = async (req, res) => {
@@ -32,7 +30,7 @@ export const login = async (req, res) => {
         // 1. التحقق من صحة البيانات عبر Zod
         const validationResult = loginValidation.safeParse(req.body);
         if (!validationResult.success) {
-            const errorsMessage = validationResult.error.errors.map(err => err.message);
+            const errorsMessage = validationResult.error.issues.map((issue) => issue.message);
             return res.status(400).json({ errors: errorsMessage });
         }
 
