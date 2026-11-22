@@ -4,7 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 
 export default function RegisterFormSection() {
-  const [fullName, setFullName] = useState("");
+  const [userName, setUserName] = useState("");
+  const [first_name,setFirst_Name]=useState("");
+  const [last_name,setlast_Name]=useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -14,7 +16,7 @@ export default function RegisterFormSection() {
 
   function handleSubmit(e) {
     e.preventDefault();
-    const trimmedName = fullName.trim();
+    const trimmedName = userName.trim();
     const trimmedEmail = email.trim();
 
     if (!trimmedName || !trimmedEmail || !password || !confirmPassword) {
@@ -62,10 +64,12 @@ export default function RegisterFormSection() {
       message: `مرحباً بك "${trimmedName}" في مذاق المغرب! تم تسجيل بيانات حسابك بنجاح.`,
     });
 
-    setFullName("");
+    setUserName("");
     setEmail("");
     setPassword("");
     setConfirmPassword("");
+    setFirst_Name("");
+    setlast_Name("");
   }
 
   return (
@@ -89,18 +93,52 @@ export default function RegisterFormSection() {
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <label
-              htmlFor="register-name"
+              htmlFor="register-username"
               className="mb-1.5 block text-xs font-extrabold text-stone-800 dark:text-amber-200 sm:text-sm"
             >
-              الاسم الكامل
+             اسم المستخدم
             </label>
             <input
-              id="register-name"
+              id="register-username"
               type="text"
-              autoComplete="name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="اكتب اسمك الكامل..."
+              autoComplete="username"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              placeholder=" اسم المستخدم "
+              className="w-full rounded-2xl border border-amber-800/25 bg-white/90 px-4 py-3 text-sm font-bold text-stone-950 placeholder:text-stone-500 focus:border-amber-700 focus:outline-none dark:border-amber-500/25 dark:bg-stone-900/80 dark:text-amber-50 dark:placeholder:text-stone-400 dark:focus:border-amber-400"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="register-lastName"
+              className="mb-1.5 block text-xs font-extrabold text-stone-800 dark:text-amber-200 sm:text-sm"
+            >
+            الاسم العائلي
+            </label>
+            <input
+              id="register-lastName"
+              type="text"
+              autoComplete="last_name"
+              value={last_name}
+              onChange={(e) => setlast_Name(e.target.value)}
+              placeholder=" اسم العائلي "
+              className="w-full rounded-2xl border border-amber-800/25 bg-white/90 px-4 py-3 text-sm font-bold text-stone-950 placeholder:text-stone-500 focus:border-amber-700 focus:outline-none dark:border-amber-500/25 dark:bg-stone-900/80 dark:text-amber-50 dark:placeholder:text-stone-400 dark:focus:border-amber-400"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="register-firstName"
+              className="mb-1.5 block text-xs font-extrabold text-stone-800 dark:text-amber-200 sm:text-sm"
+            >
+            الاسم الشخصي
+            </label>
+            <input
+              id="register-firstName"
+              type="text"
+              autoComplete="first_name"
+              value={first_name}
+              onChange={(e) => setFirst_Name(e.target.value)}
+              placeholder=" اسم الشخصي "
               className="w-full rounded-2xl border border-amber-800/25 bg-white/90 px-4 py-3 text-sm font-bold text-stone-950 placeholder:text-stone-500 focus:border-amber-700 focus:outline-none dark:border-amber-500/25 dark:bg-stone-900/80 dark:text-amber-50 dark:placeholder:text-stone-400 dark:focus:border-amber-400"
             />
           </div>

@@ -28,8 +28,8 @@ const recipeSchema = new mongoose.Schema(
       enum: ["إفطار", "غداء", "عشاء", "وجبات خفيفة", "حلويات", "أخرى"],
       default: "أخرى"
     },
-    prepTime: {
-      type: Number, // بالدقائق
+    Number_of_ingredients: {
+      type: Number, // عدد
       default: 0
     },
     cookTime: {
@@ -37,7 +37,7 @@ const recipeSchema = new mongoose.Schema(
       default: 0
     },
     servings: {
-      type: Number,
+      type: Number, // الحصص
       default: 1
     },
     image: {
