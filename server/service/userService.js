@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import Recipe from "../models/Recipe.js";
 import bcrypt from "bcrypt";
 
 // get my profile
@@ -12,11 +13,11 @@ export const getUserProfileService = async(userId)=>{
 
         const userRecipes = await Recipe.find({ author: userId }).sort({createdAt: -1});
         
-        return res.status(200).json({
+        return{
             success: true,
             user,
-            recipes: userRecipes,
-        });
+            recipes:userRecipes,
+        };
     }catch(error){
         console.error("Get profile error:", error);
         return res.status(500).json({ error: "Internal server error" });

@@ -5,6 +5,8 @@ import {
   getAllAccountService,
   deleteUserByAdminService,
   toggleSuspendUserService, 
+
+  
 } from "../service/userService.js";
 import { updateProfileValidation,changePasswordValidation } from "../validation/uservalidation.js";
 
@@ -16,12 +18,12 @@ export const getUserProfile = async (req, res) => {
         return res.status(401).json({ error: "Unauthorized; please log in first." });
       }
 
-    const { user, recipes } = await userService.getUserProfileService(userId);
+    const { user, recipes } = await getUserProfileService(userId);
 
     return res.status(200).json({
       success: true,
       user,
-      recipes: userRecipes,
+      recipes,
     });
   } 
   catch (error) {

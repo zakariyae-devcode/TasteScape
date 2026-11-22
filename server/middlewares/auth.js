@@ -1,22 +1,42 @@
 import jwt from "jsonwebtoken";
 import {env} from '../config/env.js';
 
-export const verifyAuth = (req, res, next) => {
-    try {
-        const authHeader = req.headers.authorization;
 
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ error: "Access denied. No token provided." });
-        }
+import User from "../models/User.js";
 
-        const token = authHeader.split(" ")[1]; // Bearer  97a79ceb331efc2098d5bf951b99318cf5d09248e19db8b0679810b0536c03cf
+export const verifyAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token =
+      authHeader && authHeader.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : req.cookies?.accessToken;
 
-        const decoded = jwt.verify(token, env.JWT_SECRET);
-        req.user = decoded; 
-
-        next();
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized: token missing" });
     }
-    catch (err) {
-        return res.status(403).json({ error: "Invalid or expired access token." });
+
+    const decoded = jwt.verify(token, env.JWT_SECRET);
+    const userId = decoded.userId || decoded.id || decoded._id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized: invalid token payload" });
     }
+
+    const user = await User.findById(userId).select("-password -refreshToken");
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized: user not found" });
+    }
+
+    req.user = {
+      userId: user._id,
+      id: user._id,
+      role: user.role || decoded.role,
+    };
+    req.userId = user._id;
+
+    return next();
+  } catch (error) {
+    return res.status(401).json({ error: "Unauthorized: invalid or expired token" });
+  }
 };
