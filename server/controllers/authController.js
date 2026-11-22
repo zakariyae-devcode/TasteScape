@@ -73,7 +73,12 @@ export const login = async (req, res) => {
                 error: `The password is incorrect. You have ${error.remainingAttempts} attempts remaining.` 
             });
         }
-
+        if (error.message === "FORBIDDEN_ROLE") {
+            return res.status(403).json({
+                error: "Access denied for this login route.",
+            });
+        }
+        
         console.error("Login error:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
@@ -127,6 +132,11 @@ export const loginAdmin = async (req, res) => {
         if (error.message === "INCORRECT_PASSWORD") {
             return res.status(401).json({ 
                 error: `The password is incorrect. You have ${error.remainingAttempts} attempts remaining.` 
+            });
+        }
+        if (error.message === "FORBIDDEN_ROLE") {
+            return res.status(403).json({
+                error: "Access denied for this login route.",
             });
         }
 

@@ -29,126 +29,76 @@ export const registerUserService = async ({ username, email, password,first_name
 
 
 
-export const loginService = async ({ email, username, password }) => {
-    // 1. البحث عن المستخدم بالبريد أو اسم المستخدم
-    const user = await User.findOne({ $or: [{ username }, { email }] });
-    if (!user) {
-        throw new Error("INVALID_CREDENTIALS");
-    }
-    
-    // 2. التحقق من الحظر المؤقت
-    if (user.lockUntil && user.lockUntil > Date.now()) {
-        throw new Error("ACCOUNT_LOCKED");
-    }
+const authenticateUser = async ({ email, username, password, expectedRole }) => {
+  const conditions = [];
+  if (email) conditions.push({ email: email.toLowerCase().trim() });
+  if (username) conditions.push({ username: username.trim() });
 
-    
+  if (conditions.length === 0) {
+    throw new Error("INVALID_CREDENTIALS");
+  }
 
-    // 3. التحقق من صحة كلمة المرور
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+  const user = await User.findOne({ $or: conditions });
+  if (!user) {
+    throw new Error("INVALID_CREDENTIALS");
+  }
 
-    if (!isPasswordValid) {
-        user.loginAttempts = (user.loginAttempts || 0) + 1;
+  if (user.lockUntil && user.lockUntil > Date.now()) {
+    throw new Error("ACCOUNT_LOCKED");
+  }
 
-        if (user.loginAttempts >= 4) {
-            user.lockUntil = Date.now() + 15 * 60 * 1000; // حظر لمدة 15 دقيقة
-            await user.save();
-            throw new Error("MAX_ATTEMPTS_REACHED");
-        }
-         
-        await user.save();
-        const remainingAttempts = 4 - user.loginAttempts;
-        
-        // رمي خطأ يحمل عدد المحاولات المتبقية
-        const error = new Error("INCORRECT_PASSWORD");
-        error.remainingAttempts = remainingAttempts;
-        throw error;
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) {
+    user.loginAttempts = (user.loginAttempts || 0) + 1;
+
+    if (user.loginAttempts >= 4) {
+      user.lockUntil = Date.now() + 15 * 60 * 1000;
+      await user.save();
+      throw new Error("MAX_ATTEMPTS_REACHED");
     }
 
-    // 4. إعادة تعيين محاولات الفشل عند نجاح الدخول
-    user.loginAttempts = 0;
-    user.lockUntil = null;
-
-    // 5. توليد التوكنات
-    const accessToken = generateAccessToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
-    
-
-    user.refreshToken = refreshToken;
-    user.is_active = true;
     await user.save();
+    const remainingAttempts = 4 - user.loginAttempts;
 
-    return {
-        accessToken,
-        refreshToken,
-        user: {
-            id: user._id,
-            username: user.username,
-            email: user.email,
-         
-        }
-    };
+    const error = new Error("INCORRECT_PASSWORD");
+    error.remainingAttempts = remainingAttempts;
+    throw error;
+  }
+
+  if (user.role !== expectedRole) {
+    throw new Error("FORBIDDEN_ROLE");
+  }
+
+  user.loginAttempts = 0;
+  user.lockUntil = null;
+
+  const accessToken = generateAccessToken(user._id);
+  const refreshToken = generateRefreshToken(user._id);
+
+  user.refreshToken = refreshToken;
+  user.is_active = true;
+  await user.save();
+
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    },
+  };
 };
 
-export const loginAdminService =  async ({email, username, password}) =>
-{
-    // 1. البحث عن المستخدم بالبريد أو اسم المستخدم
-    const user = await User.findOne({ $or: [{ username }, { email }] });
-    if (!user) {
-        throw new Error("INVALID_CREDENTIALS");
-    }
-    
-    // 2. التحقق من الحظر المؤقت
-    if (user.lockUntil && user.lockUntil > Date.now()) {
-        throw new Error("ACCOUNT_LOCKED");
-    }
+export const loginService = (credentials) =>
+  authenticateUser({ ...credentials, expectedRole: "user" });
 
-    
+export const loginAdminService = (credentials) =>
+  authenticateUser({ ...credentials, expectedRole: "admin" });
 
-    // 3. التحقق من صحة كلمة المرور
-    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    if (!isPasswordValid) {
-        user.loginAttempts = (user.loginAttempts || 0) + 1;
-
-        if (user.loginAttempts >= 4) {
-            user.lockUntil = Date.now() + 15 * 60 * 1000; // حظر لمدة 15 دقيقة
-            await user.save();
-            throw new Error("MAX_ATTEMPTS_REACHED");
-        }
-         
-        await user.save();
-        const remainingAttempts = 4 - user.loginAttempts;
-        
-        // رمي خطأ يحمل عدد المحاولات المتبقية
-        const error = new Error("INCORRECT_PASSWORD");
-        error.remainingAttempts = remainingAttempts;
-        throw error;
-    }
-
-    // 4. إعادة تعيين محاولات الفشل عند نجاح الدخول
-    user.loginAttempts = 0;
-    user.lockUntil = null;
-
-    // 5. توليد التوكنات
-    const accessToken = generateAccessToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
-    
-
-    user.refreshToken = refreshToken;
-    user.is_active = true;
-    await user.save();
-
-    return {
-        accessToken,
-        refreshToken,
-        user: {
-            id: user._id,
-            username: user.username,
-            email: user.email,
-         
-        }
-    };
-};
 
 
 
@@ -159,8 +109,10 @@ export const logoutService = async (refreshToken) => {
     
     // البحث عن المستخدم الذي يحمل هذا الـ Refresh Token وإزالته
     const user = await User.findOne({ refreshToken });
+ 
     if (user) {
         user.refreshToken = null;
+        user.is_active=false;
         await user.save();
     }
 };
